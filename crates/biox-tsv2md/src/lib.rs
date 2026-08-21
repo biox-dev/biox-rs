@@ -15,6 +15,34 @@ pub fn tsv2md(input: &str) -> String {
         })
         .collect();
 
+    render_markdown_table(rows)
+}
+
+/// Convert CSV (comma-separated values) input into a Markdown table.
+///
+/// The first row is treated as the header row. Rows are padded to the widest
+/// row so every row has the same number of columns. Pipe characters (`|`)
+/// inside cells are escaped. Empty input (or only whitespace) returns an empty
+/// string.
+pub fn csv2md(input: &str) -> String {
+    if input.trim().is_empty() {
+        return String::new();
+    }
+
+    let mut reader = csv::ReaderBuilder::new()
+        .has_headers(false)
+        .from_reader(input.as_bytes());
+
+    let mut rows = Vec::new();
+    for record in reader.records().flatten() {
+        rows.push(record.iter().map(|cell| cell.replace('|', "\\|")).collect());
+    }
+
+    render_markdown_table(rows)
+}
+
+fn render_markdown_table(rows: Vec<Vec<String>>) -> String {
+
     let Some(header) = rows.first() else {
         return String::new();
     };
@@ -75,9 +103,9 @@ mod tests {
     fn pads_ragged_rows() {
         let input = "A\tB\n1";
         let expected = "\
-| A   | B |
-|-----|---|
-| 1   |   |";
+| A | B |
+|---|---|
+| 1 |   |";
         assert_eq!(tsv2md(input), expected);
     }
 
@@ -85,9 +113,9 @@ mod tests {
     fn ignores_empty_lines() {
         let input = "A\tB\n\n1\t2\n";
         let expected = "\
-| A   | B   |
-|-----|-----|
-| 1   | 2   |";
+| A | B |
+|---|---|
+| 1 | 2 |";
         assert_eq!(tsv2md(input), expected);
     }
 
@@ -95,8 +123,8 @@ mod tests {
     fn escapes_pipes() {
         let input = "A\nx|y";
         let expected = "\
-| A   |
-|-----|
+| A    |
+|------|
 | x\\|y |";
         assert_eq!(tsv2md(input), expected);
     }
@@ -105,5 +133,26 @@ mod tests {
     fn empty_input_is_empty_output() {
         assert_eq!(tsv2md(""), "");
         assert_eq!(tsv2md("\n\n"), "");
+    }
+
+    #[test]
+    fn converts_basic_csv_table() {
+        let input = "Name,Age\nAlice,30\nBob,25";
+        let expected = "\
+| Name  | Age |
+|-------|-----|
+| Alice | 30  |
+| Bob   | 25  |";
+        assert_eq!(csv2md(input), expected);
+    }
+
+    #[test]
+    fn parses_quoted_csv_cells() {
+        let input = "Name,Note\nAlice,\"hello,world\"";
+        let expected = "\
+| Name  | Note        |
+|-------|-------------|
+| Alice | hello,world |";
+        assert_eq!(csv2md(input), expected);
     }
 }
