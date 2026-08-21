@@ -10,6 +10,21 @@ cargo build --release
 
 编译产物位于 `target/release/biox`。
 
+## 发布
+
+推送 `v*` 形式的 tag 时，GitHub Actions 会自动编译多平台二进制并发布到 Releases：
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+工作流定义见 `.github/workflows/release.yml`，覆盖以下平台：
+
+- Linux：`x86_64-unknown-linux-gnu`、`x86_64-unknown-linux-musl`、`aarch64-unknown-linux-gnu`
+- macOS：`x86_64-apple-darwin`、`aarch64-apple-darwin`
+- Windows：`x86_64-pc-windows-msvc`
+
 ## 使用
 
 ```bash
