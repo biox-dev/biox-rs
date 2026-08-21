@@ -1,0 +1,20 @@
+[workspace]
+members = ["crates/biox-tsv2md"]
+resolver = "2"
+
+[package]
+name = "biox"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "biox"
+path = "src/main.rs"
+
+
+
+
+
+[dependencies]
+biox-tsv2md = {  path = "crates/biox-tsv2md" }
+
